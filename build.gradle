@@ -1,0 +1,70 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url = uri("https://repsy.io/mvn/bedatadriven/activityinfo")
+    }
+}
+
+configurations {
+    gwt
+    gwtSdk
+}
+
+ext {
+    gwtVersion = "2.10.0"
+}
+
+dependencies {
+    implementation "com.google.gwt:gwt-user:2.10.0"
+    implementation 'org.activityinfo.bukavu:bukavu-core:0.1'
+    implementation 'com.google.elemental2:elemental2-core:1.1.0'
+    implementation 'com.google.elemental2:elemental2-dom:1.1.0'
+
+    // Toolkit that includes Java->JavaScript compiler
+    gwtSdk "com.google.gwt:gwt-dev:2.10.0"
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+task prepWarDir(type: Copy) {
+    from "src/main/webapp"
+    into "$buildDir/war"
+}
+
+
+task run(type: JavaExec) {
+    group 'develop'
+    dependsOn prepWarDir
+    dependsOn compileJava
+    main 'com.google.gwt.dev.DevMode'
+
+    // Add the GWT SDK to the classpath first
+    classpath configurations.gwtSdk
+
+    // Add our sources to the classpath so that the compiler can find them
+    classpath sourceSets.main.java.srcDirs
+    classpath configurations.runtimeClasspath
+
+    // GWT library sources
+    classpath configurations.gwt
+
+    args '-startServer'
+    args '-logLevel', 'WARN'
+    args '-war', "${buildDir}/war"
+    args '-startupUrl', 'index.html'
+    args '-port', "9000"
+    args '-generateJsInteropExports'
+
+    // The module to compile
+    args 'org.example.myapp.MyApp'
+
+}
